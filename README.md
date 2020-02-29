@@ -6,7 +6,9 @@ This repoistory is for the follow-up questions implementation of quiz1@sysprog-2
 Currently, there are three implementations:
 
 0: Original version in the quiz.
+
 1: Circular-doubly linked-list implemtation.
+
 2: Refector by utilizing the concept within Linux kernel `list.h`.
 
 
