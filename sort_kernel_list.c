@@ -93,6 +93,7 @@ static bool test(void *head, int* ans, int len, Sorting *sorting)
         i++;
     }
     sorting->print((list_head *)head, false);
+    sorting->list_free((void **)&head);
     return true;
 }
 

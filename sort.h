@@ -24,5 +24,6 @@ typedef struct __INTERFACE {
 extern Sorting orig_sorting;
 extern Sorting dbly_sorting;
 extern Sorting kernel_list_sorting;
+extern Sorting xor_sorting;
 
 #endif

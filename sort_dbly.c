@@ -17,8 +17,7 @@ static void push(void **head_ref, int data)
     list *new_head = malloc(sizeof(list));
     new_head->data = data;
 
-    if (!((list *)*head_ref))
-    {
+    if (!((list *)*head_ref)) {
         // the list is empty, create a single node
         new_head->next = new_head->prev = new_head;
         *head_ref = new_head;
@@ -145,6 +144,7 @@ static bool test(void *head, int* ans, int len, Sorting *sorting)
         i++;
     }
     sorting->print(head, false);
+    sorting->list_free((void **)&head);
     return true;
 }
 
