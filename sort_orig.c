@@ -36,7 +36,82 @@ static void print(void *head, bool new_line)
         printf("\n");
 }
 
-static void *sort(void *start)
+static void front_back_split(list *src, list **front, list **back)
+{
+    list *fast = src;
+    list *slow = src;
+    list *prev = NULL;
+    while (fast != NULL && fast->next != NULL) {
+        prev = slow;
+        slow = slow->next;
+        fast = fast->next->next;
+    }
+
+    *front = src;
+    if (src == NULL) {
+        // empty source
+        *back = NULL;
+    } else if (fast != NULL) {
+        // odd, cut postion is after the slow pointer
+        *back = slow->next;
+        slow->next = NULL;
+    } else {
+        // even, cut postion is in front of the slow pointer
+        *back = slow;
+        prev->next = NULL;
+    }
+}
+
+static void move_node(list **dest, list **src)
+{
+    list *target = *src;
+    if (target != NULL) {
+        *src = target->next;
+        target->next = *dest;
+        *dest = target;
+    }
+}
+
+static list *sorted_merge(list *a, list *b)
+{
+    list *hd = NULL;
+    list **last = &hd;
+
+    while (1) {
+        if (a == NULL) {
+            *last = b;
+            break;
+        } else if (b == NULL) {
+            *last = a;
+            break;
+        } else {
+            if (a->data <= b->data)
+                move_node(last, &a);
+            else 
+                move_node(last, &b);
+            last = &((*last)->next);
+        }
+    }
+    return hd;
+}
+
+static void *merge_sort(void *start)
+{
+    list *hd = (list *)start;
+    list *list1;
+    list *list2;
+
+    if (hd == NULL || hd->next == NULL)
+        return hd;
+
+    front_back_split(hd, &list1, &list2);
+    list1 = merge_sort(list1);
+    list2 = merge_sort(list2);
+    
+    return sorted_merge(list1, list2);
+}
+
+static void *insertion_sort(void *start)
 {
     if (!start || !((list *)start)->next)
         return start;
@@ -44,8 +119,8 @@ static void *sort(void *start)
     list *right = left->next;
     left->next = NULL; // partition input list into left and right sublist
 
-    left = sort(left); // list of single element is already sorted
-    right = sort(right); // sorted right sublist
+    left = insertion_sort(left); // list of single element is already sorted
+    right = insertion_sort(right); // sorted right sublist
 
     // insertion until the two sublists both been traversed
     // merge is always infront of the insertion position
@@ -120,7 +195,7 @@ Sorting orig_sorting = {
     .initialize = init,
     .push = push,
     .print = print,
-    .sort = sort,
+    .sort = merge_sort,
     .test = test,
     .list_free = list_free,
 };

@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     int correct = 0;
     srand(time(NULL));
     for (int i = 0; i < 100; i++) {
-        int testcase[10] = {0};
+        int testcase[10] = { 0 };
         for (int j = 0; j < 10; j++)
             testcase[j] = rand() % 50;
         

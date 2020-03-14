@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <math.h>
 #include <time.h>
+#include <string.h>
 
 #include "sort.h"
 #include "list.h"
@@ -37,6 +38,50 @@ static void push(void **head_ref, int data)
     list_add(&(tmp->list_h), (list_head *)*head_ref);
 }
 
+static void front_back_split(list_head *src, list_head *left)
+{
+    list_head *fast, *slow;
+    fast = slow = src->next;
+    while (fast != src && !list_is_last(fast, src)) {
+        slow = slow->next;
+        fast = fast->next->next;
+    }
+
+    if (list_empty(src)) 
+        return;
+    else if (list_is_last(fast, src)) {
+        // odd length
+        list_cut_position(left, src, slow);
+    } else {
+        // even length
+        list_cut_position(left, src, slow->prev);
+    }
+}
+
+static list_head *sorted_merge(list_head *left, list_head *right)
+{
+    LIST_HEAD(merged_head);
+    list_head *merged = &merged_head;
+    while (1) {
+        if (list_empty(left)) {
+            list_splice_tail(right, merged);
+            break;
+        } else if (list_empty(right)) {
+            list_splice_tail(left, merged);
+            break;
+        } else {
+            if (list_first_entry(left, Node, list_h)->data 
+                < list_first_entry(right, Node, list_h)->data)
+                list_move_tail(left->next, merged);
+            else
+                list_move_tail(right->next, merged);
+        }
+    }
+    INIT_LIST_HEAD(right);
+    list_splice_tail(merged, right);
+    return right;
+}
+
 static void *sort(void *start)
 {
     if (list_empty(start) || ((list_head *)start)->next == ((list_head *)start)->prev)
@@ -59,6 +104,21 @@ static void *sort(void *start)
     list_add_tail(left->next, merge);
     INIT_LIST_HEAD(left);
     return right;
+}
+
+static void *merge_sort(void *start)
+{
+    if (list_empty(start) || ((list_head *)start)->next == ((list_head *)start)->prev)
+        return start;
+
+    LIST_HEAD(left_head);
+    front_back_split((list_head *)start, &left_head);
+
+    list_head *right = merge_sort(start);
+    list_head *left = merge_sort(&left_head);
+    start = sorted_merge(left, right);
+ 
+    return start;
 }
 
 static void list_free(void **head_ref)
@@ -101,7 +161,7 @@ Sorting kernel_list_sorting = {
     .initialize = init,
     .push = push,
     .print = print,
-    .sort = sort,
+    .sort = merge_sort,
     .test = test,
     .list_free = list_free,
 };

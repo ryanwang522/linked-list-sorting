@@ -48,7 +48,7 @@ static void insert_node(void **l, int d)
     *l = tmp;
 }
 
-static void *sort(void *start)
+static void *insertion_sort(void *start)
 {
     if (!start || !((xor_list *)start)->addr)
         return start;
@@ -57,8 +57,8 @@ static void *sort(void *start)
     left->addr = NULL;
     right->addr = XOR(right->addr, left);
 
-    left = sort(left);
-    right = sort(right);
+    left = insertion_sort(left);
+    right = insertion_sort(right);
 
     for (xor_list *merge = NULL; left || right;) {
         if (!right || (left && left->data < right->data)) {
@@ -138,7 +138,7 @@ Sorting xor_sorting = {
     .initialize = init,
     .push = insert_node,
     .print = print,
-    .sort = sort,
+    .sort = insertion_sort,
     .test = test,
     .list_free = delete_xor_list,
 };
