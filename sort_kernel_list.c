@@ -38,17 +38,19 @@ static void push(void **head_ref, int data)
     list_add(&(tmp->list_h), (list_head *)*head_ref);
 }
 
-static void front_back_split(list_head *src, list_head *left)
+static int front_back_split(list_head *src, list_head *left)
 {
     list_head *fast, *slow;
     fast = slow = src->next;
+    int len = 0;
     while (fast != src && !list_is_last(fast, src)) {
         slow = slow->next;
         fast = fast->next->next;
+        len++;
     }
 
     if (list_empty(src)) 
-        return;
+        return 0;
     else if (list_is_last(fast, src)) {
         // odd length
         list_cut_position(left, src, slow);
@@ -56,6 +58,7 @@ static void front_back_split(list_head *src, list_head *left)
         // even length
         list_cut_position(left, src, slow->prev);
     }
+    return len;
 }
 
 static list_head *sorted_merge(list_head *left, list_head *right)
@@ -121,6 +124,27 @@ static void *merge_sort(void *start)
     return start;
 }
 
+static void *opt_merge_sort(void *start, int split_thres)
+{
+    if (list_empty(start) || ((list_head *)start)->next == ((list_head *)start)->prev)
+        return start;
+
+    LIST_HEAD(left_head);
+    int partition_len = front_back_split((list_head *)start, &left_head);
+    list_head *right = NULL, *left = NULL;
+
+    if (partition_len <= split_thres) {
+        left = sort(left);
+        right = sort(right);
+    } else { 
+        right = merge_sort(start);
+        left = merge_sort(&left_head);
+    }
+    start = sorted_merge(left, right);
+
+    return start;
+}
+
 static void list_free(void **head_ref)
 {
     Node *next = list_first_entry((list_head *)*head_ref, Node, list_h);
@@ -162,6 +186,7 @@ Sorting kernel_list_sorting = {
     .push = push,
     .print = print,
     .sort = merge_sort,
+    .opt_sort = opt_merge_sort, 
     .test = test,
     .list_free = list_free,
 };

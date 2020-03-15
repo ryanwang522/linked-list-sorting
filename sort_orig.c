@@ -36,15 +36,17 @@ static void print(void *head, bool new_line)
         printf("\n");
 }
 
-static void front_back_split(list *src, list **front, list **back)
+static int front_back_split(list *src, list **front, list **back)
 {
     list *fast = src;
     list *slow = src;
     list *prev = NULL;
+    int len = 0;
     while (fast != NULL && fast->next != NULL) {
         prev = slow;
         slow = slow->next;
         fast = fast->next->next;
+        len++;
     }
 
     *front = src;
@@ -60,6 +62,7 @@ static void front_back_split(list *src, list **front, list **back)
         *back = slow;
         prev->next = NULL;
     }
+    return len;
 }
 
 static void move_node(list **dest, list **src)
@@ -123,7 +126,7 @@ static void *insertion_sort(void *start)
     right = insertion_sort(right); // sorted right sublist
 
     // insertion until the two sublists both been traversed
-    // merge is always infront of the insertion position
+    // merge is always in front of the insertion position
     for (list *merge = NULL; left || right;) {
         // right list hasn't reach the end or
         // left node has found its position for inserting
@@ -153,6 +156,26 @@ static void *insertion_sort(void *start)
         }
     }
     return start;
+}
+
+static void *opt_merge_sort(void *start, int split_thres)
+{
+    list *hd = (list *)start;
+    list *list1;
+    list *list2;
+
+    if (hd == NULL || hd->next == NULL)
+        return hd;
+
+    int partition_len = front_back_split(hd, &list1, &list2);
+    if (partition_len <= split_thres) {
+        list1 = insertion_sort(list1);
+        list2 = insertion_sort(list2);
+    } else {
+        list1 = merge_sort(list1);
+        list2 = merge_sort(list2);
+    }
+    return sorted_merge(list1, list2);
 }
 
 static void list_free(void **head_ref)
@@ -196,6 +219,7 @@ Sorting orig_sorting = {
     .push = push,
     .print = print,
     .sort = merge_sort,
+    .opt_sort = opt_merge_sort,
     .test = test,
     .list_free = list_free,
 };

@@ -49,8 +49,9 @@ static void insert_node(void **head, int d)
     *head = tmp;
 }
 
-static void front_back_split(xor_list* src, xor_list **front, xor_list **back)
+static int front_back_split(xor_list* src, xor_list **front, xor_list **back)
 {
+    int len = 0;
     xor_list *fast = src,  *fast_prev = NULL, *fast_next;
     xor_list *slow = src, *slow_prev = NULL, *slow_next;
     while (fast && XOR(fast->addr, fast_prev)) {
@@ -62,6 +63,7 @@ static void front_back_split(xor_list* src, xor_list **front, xor_list **back)
         slow_next = XOR(slow->addr, slow_prev);
         slow_prev = slow;
         slow = slow_next;
+        len++;
     }
 
     *front = src;
@@ -79,6 +81,7 @@ static void front_back_split(xor_list* src, xor_list **front, xor_list **back)
         slow->addr = XOR(slow->addr, slow_prev);
         *back = slow;
     }
+    return len;
 }
 
 /* remove the 1st node in src and append it onto dest tail */
@@ -126,7 +129,6 @@ static xor_list *sorted_merge(xor_list *a, xor_list *b)
                 move_node(last, &a);
             else
                 move_node(last, &b);
-            // printf("sda\n");
 
             next = XOR(prev, (*last)->addr);
             if (hd->addr) {
@@ -195,11 +197,30 @@ static void *merge_sort(void *start)
 
     if (hd == NULL || hd->addr == NULL)
         return hd;
-
+    
     front_back_split(hd, &left, &right);
     left = merge_sort(left);
     right = merge_sort(right);
 
+    return sorted_merge(left, right);
+}
+
+static void *opt_merge_sort(void *start, int split_thres)
+{
+    xor_list *hd = (xor_list *)start;
+    xor_list *left, *right;
+
+    if (hd == NULL || hd->addr == NULL)
+        return hd;
+
+    int partition_len = front_back_split(hd, &left, &right);
+    if (partition_len <= split_thres) {
+        left = insertion_sort(left);
+        right = insertion_sort(right);
+    } else {
+        left = merge_sort(left);
+        right = merge_sort(right);
+    }
     return sorted_merge(left, right);
 }
 
@@ -247,6 +268,7 @@ Sorting xor_sorting = {
     .push = insert_node,
     .print = print,
     .sort = merge_sort,
+    .opt_sort = opt_merge_sort,
     .test = test,
     .list_free = delete_xor_list,
 };
