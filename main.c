@@ -20,24 +20,25 @@ int main(int argc, char *argv[])
     Sorting *sorting_impl = impl_provider[atoi(argv[1])];
     
     int correct = 0;
+    int testcase_len = 10;
     srand(time(NULL));
     for (int i = 0; i < 100; i++) {
         int testcase[10] = { 0 };
-        for (int j = 0; j < 10; j++)
+        for (int j = 0; j < testcase_len; j++)
             testcase[j] = rand() % 50;
         
         void *head = sorting_impl->initialize();
-        
-        for (int j = 9; j >= 0; j--) 
+
+        for (int j = testcase_len - 1; j >= 0; j--)
             sorting_impl->push((void **)&head, testcase[j]);
 
         printf("Testcase %d: ", i+1);
         sorting_impl->print(head, false);
 
         printf(" -->  ");
-        if (sorting_impl->test(head, testcase, 10, sorting_impl))
+        if (sorting_impl->test(head, testcase, testcase_len, sorting_impl))
             correct++;
-        // sorting_impl->list_free((void **)&head);
+        // memory deallocation is conducted in fucntion `test` 
         printf("\n");
     }
     printf("Testcases %d/100 passed.\n", correct);

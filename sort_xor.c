@@ -10,10 +10,10 @@ typedef struct __xor_list {
 
 #define XOR(a, b) ((xor_list *)((uintptr_t)(a) ^ (uintptr_t)(b)))
 
-xor_list *list_head = NULL;
+xor_list *head = NULL;
 static void *init() 
 {
-    return (void *)list_head;
+    return (void *)head;
 }
 
 static void print(void *head, bool new_line)
@@ -34,18 +34,111 @@ static void print(void *head, bool new_line)
         printf("\n");
 }
 
-static void insert_node(void **l, int d)
+static void insert_node(void **head, int d)
 {
+    xor_list *l = (xor_list *)*head;
     xor_list *tmp = malloc(sizeof(xor_list));
     tmp->data = d;
-
-    if (!((xor_list *)*l)) {
+    
+    if (!l) {
         tmp->addr = NULL;
     } else {
-        ((xor_list *)*l)->addr = XOR(tmp, ((xor_list *)*l)->addr);
-        tmp->addr = (xor_list *)*l;
+        l->addr = XOR(tmp, l->addr);
+        tmp->addr = l;
     }
-    *l = tmp;
+    *head = tmp;
+}
+
+static void front_back_split(xor_list* src, xor_list **front, xor_list **back)
+{
+    xor_list *fast = src,  *fast_prev = NULL, *fast_next;
+    xor_list *slow = src, *slow_prev = NULL, *slow_next;
+    while (fast && XOR(fast->addr, fast_prev)) {
+        // fast = fast->next->next
+        fast_next = XOR(fast->addr, fast_prev);
+        fast = XOR(fast_next->addr, fast);
+        fast_prev = fast_next;
+        // slow = slow->next
+        slow_next = XOR(slow->addr, slow_prev);
+        slow_prev = slow;
+        slow = slow_next;
+    }
+
+    *front = src;
+    if (!src) {
+        *back = NULL;
+    } else if (fast != NULL) {
+        // odd
+        xor_list *next = XOR(slow->addr, slow_prev);
+        next->addr = XOR(next->addr, slow);
+        *back = next;
+        slow->addr = XOR(slow->addr, next);
+    } else {
+        // even
+        slow_prev->addr = XOR(slow_prev->addr, slow);
+        slow->addr = XOR(slow->addr, slow_prev);
+        *back = slow;
+    }
+}
+
+/* remove the 1st node in src and append it onto dest tail */
+static void move_node(xor_list **dest_tail, xor_list ** src)
+{
+    xor_list *target = *src;
+    if (target) {
+        // extract target from src
+        xor_list *next = target->addr;
+        if (next)
+            next->addr = XOR(next->addr, target);
+        *src = next;
+        // append to dest tail
+        target->addr = *dest_tail;
+        if (*dest_tail)
+            (*dest_tail)->addr = XOR((*dest_tail)->addr, target);
+        else
+            *dest_tail = target;
+    }
+}
+
+static xor_list *sorted_merge(xor_list *a, xor_list *b)
+{
+    xor_list *hd = NULL;
+    xor_list **last = &hd;
+    xor_list *prev = NULL, *next = NULL;
+
+    while (1) {
+        if (!a) {
+            if (*last) {
+                (*last)->addr = XOR((*last)->addr, b);
+                b->addr = XOR(b->addr, *last);
+            } else
+                *last = b;
+            break;
+        } else if (!b) {
+            if (*last) {
+                (*last)->addr = XOR((*last)->addr, a);
+                a->addr = XOR(a->addr, *last);
+            } else
+                *last = a;
+            break;
+        } else {
+            if (a->data <= b->data)
+                move_node(last, &a);
+            else
+                move_node(last, &b);
+            // printf("sda\n");
+
+            next = XOR(prev, (*last)->addr);
+            if (hd->addr) {
+                // length > 1
+                // since next is the last element
+                // next->addr will point to the second to last
+                prev = next->addr;  
+                last = &next;
+            }
+        }
+    }
+    return hd;
 }
 
 static void *insertion_sort(void *start)
@@ -95,6 +188,21 @@ static void *insertion_sort(void *start)
     return start;
 }
 
+static void *merge_sort(void *start)
+{
+    xor_list *hd = (xor_list *)start;
+    xor_list *left, *right;
+
+    if (hd == NULL || hd->addr == NULL)
+        return hd;
+
+    front_back_split(hd, &left, &right);
+    left = merge_sort(left);
+    right = merge_sort(right);
+
+    return sorted_merge(left, right);
+}
+
 static bool test(void *head, int* ans, int len, Sorting *sorting) 
 {
     xor_list *curr = (xor_list *)head;
@@ -138,7 +246,7 @@ Sorting xor_sorting = {
     .initialize = init,
     .push = insert_node,
     .print = print,
-    .sort = insertion_sort,
+    .sort = merge_sort,
     .test = test,
     .list_free = delete_xor_list,
 };

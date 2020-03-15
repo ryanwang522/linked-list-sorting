@@ -9,7 +9,7 @@ Currently, there are four implementations:
 
 1: Circular-doubly linked-list implemtation.
 
-2: Refector by utilizing the concept within Linux kernel `list.h`.
+2: Refactor by utilizing the concept within Linux kernel `list.h`.
 
 3: XOR linked-list implemtation.
 
