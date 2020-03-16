@@ -98,6 +98,23 @@ static list *sorted_merge(list *a, list *b)
     return hd;
 }
 
+static void *insertion_sort(void *start)
+{
+    if (!start || !((list *)start)->next)
+        return start;
+
+    list *nxt = ((list *)start)->next;
+    list *sorted = (list *)start;
+    sorted->next = NULL;
+    for (list *node = nxt; node;) {
+        nxt = node->next;
+        node->next = NULL;
+        sorted = sorted_merge(sorted, node);
+        node = nxt;
+    }
+    return sorted;
+}
+
 static void *merge_sort(void *start)
 {
     list *hd = (list *)start;
@@ -114,7 +131,7 @@ static void *merge_sort(void *start)
     return sorted_merge(list1, list2);
 }
 
-static void *insertion_sort(void *start)
+static void *sort(void *start)
 {
     if (!start || !((list *)start)->next)
         return start;
@@ -122,8 +139,8 @@ static void *insertion_sort(void *start)
     list *right = left->next;
     left->next = NULL; // partition input list into left and right sublist
 
-    left = insertion_sort(left); // list of single element is already sorted
-    right = insertion_sort(right); // sorted right sublist
+    left = sort(left); // list of single element is already sorted
+    right = sort(right); // sorted right sublist
 
     // insertion until the two sublists both been traversed
     // merge is always in front of the insertion position
@@ -166,14 +183,14 @@ static void *opt_merge_sort(void *start, int split_thres)
 
     if (hd == NULL || hd->next == NULL)
         return hd;
-
     int partition_len = front_back_split(hd, &list1, &list2);
+    // printf("%d %d\n", partition_len, split_thres);
     if (partition_len <= split_thres) {
-        list1 = insertion_sort(list1);
-        list2 = insertion_sort(list2);
+        list1 = sort(list1);
+        list2 = sort(list2);
     } else {
-        list1 = merge_sort(list1);
-        list2 = merge_sort(list2);
+        list1 = opt_merge_sort(list1, split_thres);
+        list2 = opt_merge_sort(list2, split_thres);
     }
     return sorted_merge(list1, list2);
 }
@@ -199,7 +216,7 @@ static bool test(void *head, int* ans, int len, Sorting *sorting)
     }
     
     qsort(ans, len, sizeof(int), cmp);
-    head = curr = sorting->sort(head);
+    head = curr = sorting->opt_sort(head, 10);
 
     int i = 0;
     while (i < len) {
@@ -209,7 +226,7 @@ static bool test(void *head, int* ans, int len, Sorting *sorting)
         curr = curr->next;
         i++;
     }
-    sorting->print(head, false);
+
     sorting->list_free((void **)&head);
     return true;
 }

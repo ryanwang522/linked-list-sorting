@@ -6,6 +6,7 @@
 
 # Unignore all dirs
 !*/
+.vscode/
 
 # Prerequisites
 *.d
@@ -44,6 +45,7 @@
 *.i*86
 *.x86_64
 *.hex
+*.txt
 
 # Debug files
 *.dSYM/

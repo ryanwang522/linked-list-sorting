@@ -218,8 +218,8 @@ static void *opt_merge_sort(void *start, int split_thres)
         left = insertion_sort(left);
         right = insertion_sort(right);
     } else {
-        left = merge_sort(left);
-        right = merge_sort(right);
+        left = opt_merge_sort(left, split_thres);
+        right = opt_merge_sort(right, split_thres);
     }
     return sorted_merge(left, right);
 }

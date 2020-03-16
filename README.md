@@ -13,11 +13,24 @@ Currently, there are four implementations:
 
 3: XOR linked-list implemtation.
 
+Run particular implementation by passing the implementation number as arugment.
 
-For execution, you can pass the implementation number which you want to run as the second command line argument, e.g.
+### Testing correctness
+For testing, you can pass the implementation number which you want to run as the second command line argument, e.g.
 ```
 $ cd linked-list-sorting
 $ make
 $ ./sorting 2 
 ```
+or if you would like to obeserve cache miss rate by `perf`, run following commands:
+```
+$ make cache-test 0
+```
 
+### Run experiments
+Run sorting performance experiments with different split sizes.
+```
+$ make expr 0
+```
+
+In `make cache-test 0` and `make expr 3`, the third argument indicates which implementation which will be executed.

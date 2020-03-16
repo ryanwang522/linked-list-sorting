@@ -137,8 +137,8 @@ static void *opt_merge_sort(void *start, int split_thres)
         left = sort(left);
         right = sort(right);
     } else { 
-        right = merge_sort(start);
-        left = merge_sort(&left_head);
+        right = opt_merge_sort(start, split_thres);
+        left = opt_merge_sort(&left_head, split_thres);
     }
     start = sorted_merge(left, right);
 

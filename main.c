@@ -7,7 +7,7 @@
 
 #include "sort.h"
 
-#define MAX_SPLIT_SIZE 100
+#define MAX_SPLIT_SIZE 1000
 
 Sorting *impl_provider[] = {
     &orig_sorting,
@@ -41,24 +41,19 @@ int main(int argc, char *argv[])
     if (!expr) {
         int correct = 0;
         for (int i = 0; i < 100; i++) {
-            int testcase_len = rand() % 10 + 1;
+            int testcase_len = 500; //rand() % 500 + 1;
             int *testcase = malloc(sizeof(int) * testcase_len);
             for (int j = 0; j < testcase_len; j++)
-                testcase[j] = rand() % 50;
+                testcase[j] = rand() % 500;
             
             void *head = sorting_impl->initialize();
 
             for (int j = testcase_len - 1; j >= 0; j--)
                 sorting_impl->push((void **)&head, testcase[j]);
 
-            printf("Testcase %d: ", i+1);
-            sorting_impl->print(head, false);
-
-            printf(" -->  ");
             if (sorting_impl->test(head, testcase, testcase_len, sorting_impl))
                 correct++;
-            // memory deallocation is conducted in fucntion `test` 
-            printf("\n");
+            // memory deallocation of list is conducted in fucntion `test` 
             free(testcase);
         }
         printf("Testcases %d/100 passed.\n", correct);
@@ -70,18 +65,33 @@ int main(int argc, char *argv[])
 
         // TODO: find optial split siz
         int testcase_len = MAX_SPLIT_SIZE * 2;
-        for (int thres = 2; thres <= MAX_SPLIT_SIZE; thres++) {
+        for (int thres = 1; thres < MAX_SPLIT_SIZE; thres++) {
+            int *testcase = malloc(sizeof(int) * testcase_len);
+            for (int j = 0; j < testcase_len; j++)
+                testcase[j] = rand() % 500;
             void *head = sorting_impl->initialize();
             for (int i = testcase_len - 1; i >= 0; i--)
-                sorting_impl->push((void **)&head, rand() % 50);
+                sorting_impl->push((void **)&head, testcase[i]);
             
+            // optimized sorting
             struct timespec start, end;
             clock_gettime(CLOCK_REALTIME, &start);
             head = sorting_impl->opt_sort(head, thres);
             clock_gettime(CLOCK_REALTIME, &end);
-
-            printf("%d, %lf\n", thres, diff_in_second(start, end));
+            printf("%lf", diff_in_second(start, end));
             sorting_impl->list_free(&head);
+
+            head = sorting_impl->initialize();
+            for (int i = testcase_len - 1; i >= 0; i--)
+                sorting_impl->push((void **)&head, testcase[i]);
+
+            // naive mergesort
+            clock_gettime(CLOCK_REALTIME, &start);
+            head = sorting_impl->sort(head);
+            clock_gettime(CLOCK_REALTIME, &end);
+            printf(" %lf\n", diff_in_second(start, end));
+            sorting_impl->list_free(&head);
+            free(testcase);
         }
     }
     return 0;
