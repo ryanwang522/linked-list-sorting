@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
     Sorting *sorting_impl = impl_provider[impl_i];
     srand(time(NULL));
 
-    if (strcmp(argv[2], "test") == 0) {
+    if (argc == 2 || strcmp(argv[2], "test") == 0) {
         int correct = 0;
         for (int i = 0; i < 100; i++) {
             int testcase_len = rand() % 50 + 1;
