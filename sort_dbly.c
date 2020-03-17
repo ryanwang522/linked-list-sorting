@@ -124,16 +124,16 @@ static void list_free(void **head)
     }
 }
 
-static bool test(void *head, int* ans, int len, Sorting *sorting) 
+static bool test(void **head_ref, int* ans, int len, bool verbose, Sorting *sorting) 
 {
-    list *curr = (list *)head;
+    list *curr = (list *)*head_ref;
     if (!curr) {
         printf("The linked list is empty!\n");
         return false;
     }
     
     qsort(ans, len, sizeof(int), cmp);
-    head = curr = sorting->sort(head);
+    *head_ref = curr = sorting->sort(curr);
 
     int i = 0;
     while (i < len) {
@@ -143,8 +143,9 @@ static bool test(void *head, int* ans, int len, Sorting *sorting)
         curr = curr->next;
         i++;
     }
-    sorting->print(head, false);
-    sorting->list_free((void **)&head);
+
+    if (verbose)
+        sorting->print(*head_ref, true);
     return true;
 }
 

@@ -18,7 +18,7 @@ typedef struct __INTERFACE {
     void (*print)(void *head, bool new_line);
     void *(*sort)(void *start);
     void *(*opt_sort)(void *start, int split_thres);
-    bool (*test)(void *head, int *ans, int len, struct __INTERFACE *sorting);
+    bool (*test)(void **head_ref, int *ans, int len, bool verbose, struct __INTERFACE *sorting);
     void (*list_free)(void **head);
 } Sorting;
 

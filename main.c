@@ -8,6 +8,7 @@
 #include "sort.h"
 
 #define MAX_SPLIT_SIZE 1000
+#define VERBOSE false
 
 Sorting *impl_provider[] = {
     &orig_sorting,
@@ -41,23 +42,31 @@ int main(int argc, char *argv[])
     if (!expr) {
         int correct = 0;
         for (int i = 0; i < 100; i++) {
-            int testcase_len = 500; //rand() % 500 + 1;
+            int testcase_len = rand() % 50 + 1;
             int *testcase = malloc(sizeof(int) * testcase_len);
             for (int j = 0; j < testcase_len; j++)
-                testcase[j] = rand() % 500;
+                testcase[j] = rand() % 50;
             
             void *head = sorting_impl->initialize();
 
             for (int j = testcase_len - 1; j >= 0; j--)
                 sorting_impl->push((void **)&head, testcase[j]);
 
-            if (sorting_impl->test(head, testcase, testcase_len, sorting_impl))
+            if (VERBOSE) {
+                printf("Testcase %d: ", i+1);
+                sorting_impl->print(head, false);
+                printf(" -->  ");
+            }
+
+            if (sorting_impl->test(&head, testcase, testcase_len, VERBOSE, sorting_impl))
                 correct++;
-            // memory deallocation of list is conducted in fucntion `test` 
+
+            sorting_impl->list_free((void **)&head);
             free(testcase);
         }
         printf("Testcases %d/100 passed.\n", correct);
     } else {
+        /* Experiments for quiz3 */
         if (impl_i == 1) {
             printf("Optimized merge sort in dbly impl is not supported\n");
             return 0;

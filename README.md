@@ -22,7 +22,9 @@ $ cd linked-list-sorting
 $ make
 $ ./sorting 2 
 ```
-or if you would like to obeserve cache miss rate by `perf`, run following commands:
+Change definition of `VERBOSE` in `line11` in `main.c` to enable / disable printing the list before and after sorting.
+
+If you would like to obeserve cache miss rate by `perf`, run following commands:
 ```
 $ make cache-test 0
 ```

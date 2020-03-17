@@ -224,16 +224,16 @@ static void *opt_merge_sort(void *start, int split_thres)
     return sorted_merge(left, right);
 }
 
-static bool test(void *head, int* ans, int len, Sorting *sorting) 
+static bool test(void **head_ref, int* ans, int len, bool verbose, Sorting *sorting) 
 {
-    xor_list *curr = (xor_list *)head;
+    xor_list *curr = (xor_list *)*head_ref;
     if (!curr) {
         printf("The linked list is empty!\n");
         return false;
     }
     
     qsort(ans, len, sizeof(int), cmp);
-    head = curr = sorting->sort(head);
+    *head_ref = curr = sorting->sort(curr);
 
     int i = 0;
     xor_list *prev = NULL;
@@ -246,8 +246,9 @@ static bool test(void *head, int* ans, int len, Sorting *sorting)
         curr = next;
         i++;
     }
-    sorting->print(head, false);
-    sorting->list_free((void **)&head);
+
+    if (verbose)
+        sorting->print(*head_ref, true);
     return true;
 }
 
