@@ -49,7 +49,7 @@ static void insert_node(void **head, int d)
     *head = tmp;
 }
 
-static int front_back_split(xor_list* src, xor_list **front, xor_list **back)
+static void front_back_split(xor_list* src, xor_list **front, xor_list **back, int *front_len, int *back_len)
 {
     int len = 0;
     xor_list *fast = src,  *fast_prev = NULL, *fast_next;
@@ -75,13 +75,14 @@ static int front_back_split(xor_list* src, xor_list **front, xor_list **back)
         next->addr = XOR(next->addr, slow);
         *back = next;
         slow->addr = XOR(slow->addr, next);
+        *front_len = len; *back_len = len + 1;
     } else {
         // even
         slow_prev->addr = XOR(slow_prev->addr, slow);
         slow->addr = XOR(slow->addr, slow_prev);
         *back = slow;
+        *front_len = *back_len = len;
     }
-    return len;
 }
 
 /* remove the 1st node in src and append it onto dest tail */
@@ -103,7 +104,7 @@ static void move_node(xor_list **dest_tail, xor_list ** src)
     }
 }
 
-static xor_list *sorted_merge(xor_list *a, xor_list *b)
+static xor_list *my_sorted_merge(xor_list *a, xor_list *b)
 {
     xor_list *hd = NULL;
     xor_list **last = &hd;
@@ -143,7 +144,44 @@ static xor_list *sorted_merge(xor_list *a, xor_list *b)
     return hd;
 }
 
-static void *insertion_sort(void *start)
+static xor_list *sorted_merge(xor_list *l1, xor_list* l2)
+{
+    xor_list *start = NULL;
+    for (xor_list *merge = NULL; l1 || l2;) {
+        if (!l2 || (l1 && l1->data < l2->data)) {
+            xor_list *next = l1->addr;
+            if (next)
+                next->addr = XOR(l1, next->addr);
+
+            if (!merge) {
+                start = merge = l1;
+                merge->addr = NULL;
+            } else {
+                merge->addr = XOR(merge->addr, l1);
+                l1->addr = merge;
+                merge = l1;
+            }
+            l1 = next;
+        } else {
+            xor_list *next = l2->addr;
+            if (next)
+                next->addr = XOR(l2, next->addr);
+
+            if (!merge) {
+                start = merge = l2;
+                merge->addr = NULL;
+            } else {
+                merge->addr = XOR(merge->addr, l2);
+                l2->addr = merge;
+                merge = l2;
+            }
+            l2 = next;
+        }
+    }
+    return start;
+}
+
+static void *sort(void *start)
 {
     if (!start || !((xor_list *)start)->addr)
         return start;
@@ -152,75 +190,63 @@ static void *insertion_sort(void *start)
     left->addr = NULL;
     right->addr = XOR(right->addr, left);
 
-    left = insertion_sort(left);
-    right = insertion_sort(right);
+    left = sort(left);
+    right = sort(right);
 
-    for (xor_list *merge = NULL; left || right;) {
-        if (!right || (left && left->data < right->data)) {
-            xor_list *next = left->addr;
-            if (next)
-                next->addr = XOR(left, next->addr);
+    return sorted_merge(left, right);
+}
 
-            if (!merge) {
-                start = merge = left;
-                merge->addr = NULL;
-            } else {
-                merge->addr = XOR(merge->addr, left);
-                left->addr = merge;
-                merge = left;
-            }
-            left = next;
-        } else {
-            xor_list *next = right->addr;
-            if (next)
-                next->addr = XOR(right, next->addr);
+static void *insertion_sort(void *start)
+{
+    if (!start || !((xor_list *)start)->addr)
+        return start;
 
-            if (!merge) {
-                start = merge = right;
-                merge->addr = NULL;
-            } else {
-                merge->addr = XOR(merge->addr, right);
-                right->addr = merge;
-                merge = right;
-            }
-            right = next;
-        }
+    xor_list *sorted = (xor_list *)start;
+    xor_list *next = sorted->addr;
+    if (next)
+        next->addr = XOR(sorted, next->addr);
+    sorted->addr = NULL;
+
+    for (xor_list *curr = next; curr;) {
+        next = curr->addr;
+        if (next)
+            next->addr = XOR(curr, next->addr);
+        curr->addr = NULL;
+        sorted = sorted_merge(curr, sorted);
+        curr = next;
     }
-
-    return start;
+    return sorted;
 }
 
 static void *merge_sort(void *start)
 {
     xor_list *hd = (xor_list *)start;
     xor_list *left, *right;
+    int r_len, l_len;
 
     if (hd == NULL || hd->addr == NULL)
         return hd;
     
-    front_back_split(hd, &left, &right);
+    front_back_split(hd, &left, &right, &r_len, &l_len);
     left = merge_sort(left);
     right = merge_sort(right);
 
     return sorted_merge(left, right);
 }
 
-static void *opt_merge_sort(void *start, int split_thres)
+static void *opt_merge_sort(void *start, int list_len, int split_thres)
 {
     xor_list *hd = (xor_list *)start;
-    xor_list *left, *right;
-
     if (hd == NULL || hd->addr == NULL)
         return hd;
+    if (list_len <= split_thres)
+        return insertion_sort(start);
 
-    int partition_len = front_back_split(hd, &left, &right);
-    if (partition_len <= split_thres) {
-        left = insertion_sort(left);
-        right = insertion_sort(right);
-    } else {
-        left = opt_merge_sort(left, split_thres);
-        right = opt_merge_sort(right, split_thres);
-    }
+    xor_list *left, *right;
+    int left_len = 0, right_len = 0;
+    front_back_split(hd, &left, &right, &left_len, &right_len);
+    left = opt_merge_sort(left, left_len, split_thres);
+    right = opt_merge_sort(right, right_len, split_thres);
     return sorted_merge(left, right);
 }
 

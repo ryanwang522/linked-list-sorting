@@ -36,7 +36,33 @@ static void print(void *head, bool new_line)
         printf("\n");
 }
 
-static int front_back_split(list *src, list **front, list **back)
+static void front_back_split(list *src, list **front, list **back)
+{
+    list *fast = src;
+    list *slow = src;
+    list *prev = NULL;
+    while (fast != NULL && fast->next != NULL) {
+        prev = slow;
+        slow = slow->next;
+        fast = fast->next->next;
+    }
+
+    *front = src;
+    if (src == NULL) {
+        // empty source
+        *back = NULL;
+    } else if (fast != NULL) {
+        // odd, cut postion is after the slow pointer
+        *back = slow->next;
+        slow->next = NULL;
+    } else {
+        // even, cut postion is in front of the slow pointer
+        *back = slow;
+        prev->next = NULL;
+    }
+}
+
+static void split(list *src, list **front, list **back, int *front_len, int *back_len)
 {
     list *fast = src;
     list *slow = src;
@@ -57,12 +83,13 @@ static int front_back_split(list *src, list **front, list **back)
         // odd, cut postion is after the slow pointer
         *back = slow->next;
         slow->next = NULL;
+        *front_len = len; *back_len = len + 1;
     } else {
         // even, cut postion is in front of the slow pointer
         *back = slow;
         prev->next = NULL;
+        *front_len = *back_len = len;
     }
-    return len;
 }
 
 static void move_node(list **dest, list **src)
@@ -175,24 +202,21 @@ static void *sort(void *start)
     return start;
 }
 
-static void *opt_merge_sort(void *start, int split_thres)
+static void *opt_merge_sort(void *start, int list_len, int split_thres)
 {
     list *hd = (list *)start;
-    list *list1;
-    list *list2;
-
     if (hd == NULL || hd->next == NULL)
         return hd;
-    int partition_len = front_back_split(hd, &list1, &list2);
-    // printf("%d %d\n", partition_len, split_thres);
-    if (partition_len <= split_thres) {
-        list1 = sort(list1);
-        list2 = sort(list2);
-    } else {
-        list1 = opt_merge_sort(list1, split_thres);
-        list2 = opt_merge_sort(list2, split_thres);
-    }
-    return sorted_merge(list1, list2);
+
+    if (list_len <= split_thres)
+        return insertion_sort(start);
+
+    int right_len = 0, left_len = 0;
+    list *right, *left;
+    split(hd, &left, &right, &left_len, &right_len);
+    right = opt_merge_sort(right, right_len, split_thres);
+    left = opt_merge_sort(left, left_len, split_thres);
+    return sorted_merge(right, left);
 }
 
 static void list_free(void **head_ref)
