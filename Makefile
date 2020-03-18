@@ -10,7 +10,7 @@ SRCS_common = \
 	sort.c
 
 # If the first argument is "cache-test"...
-ifneq (,$(filter $(firstword $(MAKECMDGOALS)),test cache-test expr))
+ifneq (,$(filter $(firstword $(MAKECMDGOALS)),test cache-test expr cmp))
   # use the rest as arguments for "cache-test"
   IMPL := $(wordlist 2,3,$(MAKECMDGOALS))
   # ...and turn them into do-nothing targets
@@ -30,8 +30,11 @@ cache-test: $(EXEC)
 			./sorting ${IMPL} test
 
 expr: $(EXEC)
-	taskset 0x1 ./sorting ${IMPL} expr > opt_output.txt
+	echo 3 | sudo tee /proc/sys/vm/drop_caches
+	taskset 0x1 ./sorting ${IMPL} expr > output/opt_output.txt
 	python3 plot.py
 
 cmp: $(EXEC)
-	./sorting 0 cmp > cmp_output.txt
+	echo 3 | sudo tee /proc/sys/vm/drop_caches
+	./sorting ${IMPL} cmp > output/cmp_output.txt
+	python3 cmp_plot.py

@@ -261,6 +261,7 @@ Sorting orig_sorting = {
     .push = push,
     .print = print,
     .sort = merge_sort,
+    .insertion_sort = insertion_sort,
     .opt_sort = opt_merge_sort,
     .test = test,
     .list_free = list_free,

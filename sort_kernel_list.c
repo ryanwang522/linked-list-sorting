@@ -147,6 +147,33 @@ static void *merge_sort(void *start)
     return start;
 }
 
+static void *insertion_sort(void *start)
+{
+    if (list_empty(start) || ((list_head *)start)->next == ((list_head *)start)->prev)
+        return start;
+
+    LIST_HEAD(sorted_head);
+    list_head *sorted = &sorted_head;
+    list_cut_position(sorted, (list_head *)start, ((list_head *)start)->next);
+
+    // insertion
+    LIST_HEAD(merge_head);
+    list_head *merge;
+    while (!list_empty(start)) {
+        list_cut_position(&merge_head, (list_head *)start, ((list_head *)start)->next);
+        list_for_each_prev(merge, sorted) {
+            int elem_data = list_entry(merge_head.next, Node, list_h)->data;
+            if (list_entry(merge, Node, list_h)->data < elem_data)
+                break;
+        }
+        list_add(merge_head.next, merge);
+        INIT_LIST_HEAD(&merge_head);
+    }
+    INIT_LIST_HEAD(start);
+    list_splice_tail(sorted, (list_head *)start);
+    return start;
+}
+
 static void *opt_merge_sort(void *start, int list_len, int split_thres)
 {
     if (list_empty(start) || ((list_head *)start)->next == ((list_head *)start)->prev)
@@ -188,7 +215,7 @@ static bool test(void **head_ref, int* ans, int len, bool verbose, Sorting *sort
     
     qsort(ans, len, sizeof(int), cmp);
     *head_ref = curr = sorting->sort(curr);
-
+    print(curr, 1);
     int i = 0;
     while (i < len) {
         if (list_entry(curr->next, Node, list_h)->data != ans[i])
@@ -207,6 +234,7 @@ Sorting kernel_list_sorting = {
     .push = push,
     .print = print,
     .sort = merge_sort,
+    .insertion_sort = insertion_sort,
     .opt_sort = opt_merge_sort, 
     .test = test,
     .list_free = list_free,

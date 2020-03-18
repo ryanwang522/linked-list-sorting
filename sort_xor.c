@@ -295,6 +295,7 @@ Sorting xor_sorting = {
     .push = insert_node,
     .print = print,
     .sort = merge_sort,
+    .insertion_sort = insertion_sort,
     .opt_sort = opt_merge_sort,
     .test = test,
     .list_free = delete_xor_list,

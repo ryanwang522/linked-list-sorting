@@ -7,7 +7,7 @@
 
 #include "sort.h"
 
-#define MAX_SPLIT_SIZE 1000
+#define MAX_SPLIT_SIZE 100
 #define VERBOSE false
 
 Sorting *impl_provider[] = {
@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
         /* Experiments for quiz3 */
 
         // find optial split size
-        int testcase_len = MAX_SPLIT_SIZE * 2;
+        int testcase_len = 10000;
         for (int thres = 1; thres < MAX_SPLIT_SIZE; thres++) {
             int *testcase = malloc(sizeof(int) * testcase_len);
             for (int j = 0; j < testcase_len; j++)
@@ -97,23 +97,47 @@ int main(int argc, char *argv[])
             free(testcase);
         }
     } else if (strcmp(argv[2], "cmp") == 0) {
-        int split_size = 20;
-        int testcase_len = 1000;
-        for (int i = 0; i < 50; i++) {
-            for (int j = 0; j < 3; j++) {
-                sorting_impl = impl_provider[j];
-                void *head = sorting_impl->initialize();
-                for (int k = testcase_len - 1; k >= 0; k--)
-                    sorting_impl->push((void **)&head, rand() % testcase_len);
+        int split_size = 10;
+        int testcase_len = 100;
+        for (int i = 0; i < 30; i++) {
+            int *testcase = malloc(sizeof(int) * testcase_len);
+            for (int j = 0; j < testcase_len; j++)
+                testcase[j] = rand() % testcase_len;
 
-                struct timespec start, end;
-                clock_gettime(CLOCK_REALTIME, &start);
-                head = sorting_impl->opt_sort(head, testcase_len, split_size);
-                clock_gettime(CLOCK_REALTIME, &end);
-                printf("%lf ", diff_in_second(start, end));
-                sorting_impl->list_free(&head);
-            }
+            void *head = sorting_impl->initialize();
+            for (int k = testcase_len - 1; k >= 0; k--)
+                sorting_impl->push((void **)&head, testcase[k]);
+
+            struct timespec start, end;
+            clock_gettime(CLOCK_REALTIME, &start);
+            head = sorting_impl->opt_sort(head, testcase_len, split_size);
+            clock_gettime(CLOCK_REALTIME, &end);
+            printf("%lf ", diff_in_second(start, end));
+            sorting_impl->list_free(&head);
+
+            head = sorting_impl->initialize();
+            for (int k = testcase_len - 1; k >= 0; k--)
+                sorting_impl->push((void **)&head, testcase[k]);
+
+            clock_gettime(CLOCK_REALTIME, &start);
+            head = sorting_impl->sort(head);
+            clock_gettime(CLOCK_REALTIME, &end);
+            printf("%lf ", diff_in_second(start, end));
+            sorting_impl->list_free(&head);
+            
+
+            // insertion sort
+            head = sorting_impl->initialize();
+            for (int k = testcase_len - 1; k >= 0; k--)
+                sorting_impl->push((void **)&head, testcase[k]);
+
+            clock_gettime(CLOCK_REALTIME, &start);
+            head = sorting_impl->insertion_sort(head);
+            clock_gettime(CLOCK_REALTIME, &end);
+            printf("%lf ", diff_in_second(start, end));
+            sorting_impl->list_free(&head);
             printf("\n");
+            free(testcase);
         }
     }
     return 0;
